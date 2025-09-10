@@ -1,0 +1,11 @@
+region,division,track_id,km_marker,component_type,year,serial_number,material,size,manufacturer
+WR,BCT,21,114320,BOLT,2024,1001,Steel,M20,Railway Component Co.
+CR,CSMT,105,89450,CLIP,2024,2001,Steel,Standard,Track Solutions Ltd.
+NR,DLI,67,234100,PLATE,2024,3001,Steel,Heavy Duty,Northern Rails Inc.
+ER,HWH,45,156780,SLEEPER,2024,4001,Concrete,Standard,Eastern Rail Components
+SR,MAS,89,234560,ANCHOR,2024,5001,Steel,Heavy Duty,Southern Track Works
+WR,VAPI,12,78920,BOLT,2024,1002,Steel,M22,Western Component Mfg.
+CR,NAGPUR,78,345670,CLIP,2024,2002,Steel,Standard,Central Rail Systems
+NR,AMB,34,123450,PLATE,2024,3002,Steel,Heavy Duty,Northern Component Co.
+ER,ASN,56,234890,SLEEPER,2024,4002,Concrete,Standard,Eastern Track Solutions
+SR,TPJ,91,456780,ANCHOR,2024,5002,Steel,Heavy Duty,Southern Rail Works

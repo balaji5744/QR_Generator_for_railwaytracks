@@ -1,0 +1,11 @@
+Filename,Quality_Score,Is_Readable,Issues,Size_Score,Contrast_Score,Sharpness_Score,Alignment_Score,Readability_Score,Image_Width,Image_Height,File_Size_Bytes
+IR-WR-BCT-021-114320-BOLT-2024-000002.png,75.0,False,QR code alignment markers are distorted; QR code cannot be read by standard scanners,100,100,100,33.33333333333333,0,59,59,400
+IR-CR-CSMT-105-089450-CLIP-2024-000001.png,90.0,True,QR code alignment markers are distorted,100,100,100,33.33333333333333,100,94,94,476
+IR-NR-DLI-067-234100-PLATE-2024-000001.png,90.0,True,QR code alignment markers are distorted,100,100,100,33.33333333333333,100,141,141,547
+IR-ER-HWH-045-156780-SLEEPER-2024-000001.png,90.0,True,QR code alignment markers are distorted,100,100,100,33.33333333333333,100,177,177,630
+IR-SR-MAS-089-234560-ANCHOR-2024-000001.png,90.0,True,QR code alignment markers are distorted,100,100,100,33.33333333333333,100,118,118,525
+IR-WR-VAPI-012-078920-BOLT-2024-000001.png,75.0,False,QR code alignment markers are distorted; QR code cannot be read by standard scanners,100,100,100,33.33333333333333,0,59,59,407
+IR-CR-NAGPUR-078-345670-CLIP-2024-000001.png,90.0,True,QR code alignment markers are distorted,100,100,100,33.33333333333333,100,94,94,483
+IR-NR-AMB-034-123450-PLATE-2024-000001.png,90.0,True,QR code alignment markers are distorted,100,100,100,33.33333333333333,100,141,141,548
+IR-ER-ASN-056-234890-SLEEPER-2024-000001.png,90.0,True,QR code alignment markers are distorted,100,100,100,33.33333333333333,100,177,177,610
+IR-SR-TPJ-091-456780-ANCHOR-2024-000001.png,90.0,True,QR code alignment markers are distorted,100,100,100,33.33333333333333,100,118,118,544
