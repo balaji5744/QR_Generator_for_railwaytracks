@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Verify QR Code Quality{% endblock %}
+{% block content %}
+<h2>AI Quality Verification</h2>
+<p>Upload a QR code image to analyze its quality and get suggestions for improvement.</p>
+<div class="row">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Upload QR Code Image</label>
+                        <input class="form-control" type="file" id="file" name="file" required accept="image/png, image/jpeg">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Verify Quality</button>
+                </form>
+            </div>
+        </div>
+        {% if uploaded_image %}
+            <div class="mt-4 text-center">
+                <h5>Uploaded Image:</h5>
+                <img src="{{ url_for('serve_upload', filename=uploaded_image) }}" class="img-fluid" style="max-height: 200px;">
+            </div>
+        {% endif %}
+    </div>
+    <div class="col-md-7">
+        {% if result %}
+            <h3>Verification Results</h3>
+            <div class="card">
+                <div class="card-header">
+                    <strong>Overall Score: {{ result.quality_score }}/100 | Readable: 
+                        {% if result.is_readable %}
+                            <span class="badge bg-success">Yes</span>
+                        {% else %}
+                            <span class="badge bg-danger">No</span>
+                        {% endif %}
+                    </strong>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Size Score:</strong> {{ result.detailed_analysis.size_score|round(1) }}/100</li>
+                    <li class="list-group-item"><strong>Contrast Score:</strong> {{ result.detailed_analysis.contrast_score|round(1) }}/100</li>
+                    <li class="list-group-item"><strong>Sharpness Score:</strong> {{ result.detailed_analysis.sharpness_score|round(1) }}/100</li>
+                    <li class="list-group-item"><strong>Alignment Score:</strong> {{ result.detailed_analysis.alignment_score|round(1) }}/100</li>
+                    <li class="list-group-item"><strong>Readability Score:</strong> {{ result.detailed_analysis.readability_score|round(1) }}/100</li>
+                </ul>
+            </div>
+            {% if result.issues %}
+                <h4 class="mt-4">⚠️ Issues Found:</h4>
+                <ul class="list-group">
+                    {% for issue in result.issues %}
+                    <li class="list-group-item list-group-item-warning">{{ issue }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% if suggestions %}
+                <h4 class="mt-4">💡 Improvement Suggestions:</h4>
+                <ul class="list-group">
+                    {% for suggestion in suggestions %}
+                    <li class="list-group-item list-group-item-info">{{ suggestion }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% else %}
+            <div class="card bg-light">
+                <div class="card-body text-center" style="padding: 10rem 2rem;">
+                    <p class="text-muted">Your verification results will appear here.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+Status,QR_Data,File_Path,Error,region,division,track_id,km_marker,component_type,installation_date,serial_number,material,size,manufacturer
+FAILED,,,Invalid data type or format: Invalid date format for '23-04-2025'. Expected YYYY-MM-DD.,WR,BCT,21,114320,BOLT,23-04-2025,1,Steel,M20,Railway Component Co.
+FAILED,,,Invalid data type or format: Invalid date format for '05-10-2025'. Expected YYYY-MM-DD.,CR,CSMT,105,89450,CLIP,05-10-2025,1,Steel,Standard,Track Solutions Ltd.
+FAILED,,,Invalid data type or format: Invalid date format for '12-10-2025'. Expected YYYY-MM-DD.,NR,DLI,67,234100,PLATE,12-10-2025,1,Steel,Heavy Duty,Northern Rails Inc.
+FAILED,,,Invalid data type or format: Invalid date format for '21-10-2025'. Expected YYYY-MM-DD.,ER,HWH,45,156780,SLEEPER,21-10-2025,1,Concrete,Standard,Eastern Rail Components
+FAILED,,,Invalid data type or format: Invalid date format for '03-11-2025'. Expected YYYY-MM-DD.,SR,MAS,89,234560,ANCHOR,03-11-2025,1,Steel,Heavy Duty,Southern Track Works
+FAILED,,,Invalid data type or format: Invalid date format for '15-11-2025'. Expected YYYY-MM-DD.,WR,VAPI,12,78920,BOLT,15-11-2025,1,Steel,M22,Western Component Mfg.
+FAILED,,,Invalid data type or format: Invalid date format for '28-11-2025'. Expected YYYY-MM-DD.,CR,NAGPUR,78,345670,CLIP,28-11-2025,1,Steel,Standard,Central Rail Systems
+FAILED,,,Invalid data type or format: Invalid date format for '07-12-2025'. Expected YYYY-MM-DD.,NR,AMB,34,123450,PLATE,07-12-2025,1,Steel,Heavy Duty,Northern Component Co.
+FAILED,,,Invalid data type or format: Invalid date format for '19-12-2025'. Expected YYYY-MM-DD.,ER,ASN,56,234890,SLEEPER,19-12-2025,1,Concrete,Standard,Eastern Track Solutions
+FAILED,,,Invalid data type or format: Invalid date format for '05-01-2026'. Expected YYYY-MM-DD.,SR,TPJ,91,456780,ANCHOR,05-01-2026,1,Steel,Heavy Duty,Southern Rail Works

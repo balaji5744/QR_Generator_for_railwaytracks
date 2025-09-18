@@ -1,0 +1,4 @@
+Status,QR_Data,File_Path,Error,region,division,track_id,km_marker,component_type,installation_date,serial_number,material,size,manufacturer
+SUCCESS,IR-WR-BCT-021-114320-BOLT-20251005-000001,output/qr_codes\IR-WR-BCT-021-114320-BOLT-20251005-000001.png,,WR,BCT,21,114320,BOLT,2025-10-05,1,Steel,M20,Railway Component Co.
+SUCCESS,IR-CR-CSMT-105-089450-CLIP-20251012-000001,output/qr_codes\IR-CR-CSMT-105-089450-CLIP-20251012-000001.png,,CR,CSMT,105,89450,CLIP,2025-10-12,1,Steel,Standard,Track Solutions Ltd.
+SUCCESS,IR-NR-DLI-067-234100-PLATE-20251021-000001,output/qr_codes\IR-NR-DLI-067-234100-PLATE-20251021-000001.png,,NR,DLI,67,234100,PLATE,2025-10-21,1,Steel,Heavy Duty,Northern Rails Inc.

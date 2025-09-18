@@ -6,194 +6,109 @@ Handles SQLite database operations for component tracking
 import sqlite3
 import os
 from datetime import datetime
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional
+
+# Add project root to path
 import sys
-import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import DATABASE_PATH
 
 
 class RailwayDatabaseManager:
     """Manages SQLite database for railway component tracking"""
-    
+
     def __init__(self, db_path=None):
         self.db_path = db_path or DATABASE_PATH
         self.ensure_db_directory()
         self.init_database()
-    
+
     def ensure_db_directory(self):
-        """Ensure database directory exists"""
         db_dir = os.path.dirname(self.db_path)
         if db_dir:
             os.makedirs(db_dir, exist_ok=True)
-    
+
     def init_database(self):
-        """Initialize database with required tables"""
-        
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            
-            # Create components table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS components (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    qr_data TEXT UNIQUE NOT NULL,
-                    region TEXT NOT NULL,
-                    division TEXT NOT NULL,
-                    track_id INTEGER NOT NULL,
-                    km_marker INTEGER NOT NULL,
-                    component_type TEXT NOT NULL,
-                    year INTEGER NOT NULL,
-                    serial_number INTEGER NOT NULL,
-                    material TEXT,
-                    size TEXT,
-                    manufacturer TEXT,
-                    installation_date DATE,
-                    warranty_expiry DATE,
-                    status TEXT DEFAULT 'ACTIVE',
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, qr_data TEXT UNIQUE NOT NULL,
+                    region TEXT NOT NULL, division TEXT NOT NULL, track_id INTEGER NOT NULL,
+                    km_marker INTEGER NOT NULL, component_type TEXT NOT NULL,
+                    installation_date DATE NOT NULL, serial_number INTEGER NOT NULL,
+                    material TEXT, size TEXT, manufacturer TEXT, warranty_expiry DATE,
+                    status TEXT DEFAULT 'ACTIVE', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
-            
-            # Create serial number tracking table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS serial_tracking (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    region TEXT NOT NULL,
-                    division TEXT NOT NULL,
-                    component_type TEXT NOT NULL,
-                    year INTEGER NOT NULL,
-                    last_serial_number INTEGER DEFAULT 0,
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, region TEXT NOT NULL,
+                    division TEXT NOT NULL, component_type TEXT NOT NULL,
+                    tracking_date TEXT NOT NULL, last_serial_number INTEGER DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(region, division, component_type, year)
+                    UNIQUE(region, division, component_type, tracking_date)
                 )
             ''')
-            
-            # Create generation logs table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS generation_logs (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    qr_data TEXT NOT NULL,
-                    generation_type TEXT NOT NULL,
-                    batch_id TEXT,
-                    file_path TEXT,
-                    quality_score REAL,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, qr_data TEXT NOT NULL,
+                    generation_type TEXT NOT NULL, batch_id TEXT, file_path TEXT,
+                    quality_score REAL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
-            
-            # Create indexes for better performance
-            cursor.execute('CREATE INDEX IF NOT EXISTS idx_components_qr_data ON components(qr_data)')
-            cursor.execute('CREATE INDEX IF NOT EXISTS idx_components_region_division ON components(region, division)')
-            cursor.execute('CREATE INDEX IF NOT EXISTS idx_components_type_year ON components(component_type, year)')
-            cursor.execute('CREATE INDEX IF NOT EXISTS idx_serial_tracking_key ON serial_tracking(region, division, component_type, year)')
-            
             conn.commit()
-    
-    def save_component_data(self, qr_data: str, component_specs: Dict) -> bool:
-        """
-        Save component data to database
-        
-        Parameters:
-        - qr_data: str (QR code data)
-        - component_specs: dict (component specifications)
-        
-        Returns:
-        - success: bool
-        """
-        
+
+    def save_component_data(self, qr_data: str, component_specs: Dict, installation_date: str):
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                
-                # Parse QR data to extract components
                 parts = qr_data.split('-')
-                if len(parts) != 8:
-                    raise ValueError("Invalid QR data format")
-                
-                region, division, track_id, km_marker, component_type, year, serial_number = parts[1:]
-                
-                # Insert component data
+                region, division, track_id, km_marker, component_type, date_str, serial_number = parts[1:]
                 cursor.execute('''
                     INSERT INTO components (
-                        qr_data, region, division, track_id, km_marker,
-                        component_type, year, serial_number, material, size,
-                        manufacturer, installation_date, warranty_expiry, status
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        qr_data, region, division, track_id, km_marker, component_type,
+                        installation_date, serial_number, material, size, manufacturer, status
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
-                    qr_data,
-                    region,
-                    division,
-                    int(track_id),
-                    int(km_marker),
-                    component_type,
-                    int(year),
-                    int(serial_number),
-                    component_specs.get('material'),
-                    component_specs.get('size'),
-                    component_specs.get('manufacturer'),
-                    component_specs.get('installation_date'),
-                    component_specs.get('warranty_expiry'),
-                    component_specs.get('status', 'ACTIVE')
+                    qr_data, region, division, int(track_id), int(km_marker),
+                    component_type, installation_date, int(serial_number),
+                    component_specs.get('material'), component_specs.get('size'),
+                    component_specs.get('manufacturer'), component_specs.get('status', 'ACTIVE')
                 ))
-                
                 conn.commit()
                 return True
-                
         except sqlite3.IntegrityError:
-            # QR data already exists
             return False
         except Exception as e:
             print(f"Error saving component data: {e}")
             return False
-    
-    def get_next_serial_number(self, region: str, division: str, 
-                              component_type: str, year: int) -> int:
-        """
-        Get next available serial number for a component category
-        
-        Parameters:
-        - region: str
-        - division: str
-        - component_type: str
-        - year: int
-        
-        Returns:
-        - next_serial: int
-        """
-        
+
+    def get_next_serial_number(self, region: str, division: str,
+                              component_type: str, tracking_date: str) -> int:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            
-            # Get current serial number
             cursor.execute('''
                 SELECT last_serial_number FROM serial_tracking
-                WHERE region = ? AND division = ? AND component_type = ? AND year = ?
-            ''', (region, division, component_type, year))
-            
+                WHERE region = ? AND division = ? AND component_type = ? AND tracking_date = ?
+            ''', (region, division, component_type, tracking_date))
             result = cursor.fetchone()
-            
             if result:
                 next_serial = result[0] + 1
-                # Update the serial number
                 cursor.execute('''
-                    UPDATE serial_tracking 
-                    SET last_serial_number = ?, updated_at = CURRENT_TIMESTAMP
-                    WHERE region = ? AND division = ? AND component_type = ? AND year = ?
-                ''', (next_serial, region, division, component_type, year))
+                    UPDATE serial_tracking SET last_serial_number = ?
+                    WHERE region = ? AND division = ? AND component_type = ? AND tracking_date = ?
+                ''', (next_serial, region, division, component_type, tracking_date))
             else:
-                # First serial number for this category
                 next_serial = 1
                 cursor.execute('''
-                    INSERT INTO serial_tracking (region, division, component_type, year, last_serial_number)
+                    INSERT INTO serial_tracking (region, division, component_type, tracking_date, last_serial_number)
                     VALUES (?, ?, ?, ?, ?)
-                ''', (region, division, component_type, year, next_serial))
-            
+                ''', (region, division, component_type, tracking_date, next_serial))
             conn.commit()
             return next_serial
-    
+        
     def search_components(self, filters: Dict) -> List[Dict]:
         """
         Search components by various criteria

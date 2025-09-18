@@ -4,297 +4,152 @@ Handles bulk QR code generation and processing
 """
 
 import os
-import csv
-import zipfile
 import uuid
 from datetime import datetime
-from typing import List, Dict, Tuple
+from typing import List, Dict
 import pandas as pd
 
 import sys
-import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from qr_generator import RailwayQRGenerator
-from data_validator import RailwayDataValidator
-from database_manager import RailwayDatabaseManager
+from src.qr_generator import RailwayQRGenerator
+from src.database_manager import RailwayDatabaseManager
 from config import OUTPUT_DIR
 
 
 class RailwayBatchProcessor:
     """Handles batch processing of railway QR codes"""
-    
+
     def __init__(self):
         self.qr_generator = RailwayQRGenerator()
-        self.validator = RailwayDataValidator()
         self.db_manager = RailwayDatabaseManager()
-    
-    def generate_batch_qr(self, components_list: List[Dict], 
+
+    def generate_batch_qr(self, components_list: List[Dict],
                          output_directory: str = None) -> Dict:
-        """
-        Generate multiple QR codes at once
-        
-        Parameters:
-        - components_list: list of component dictionaries
-        - output_directory: str (where to save QR images)
-        
-        Returns:
-        - result: dict with success_count, failed_components, report_file
-        """
-        
         if output_directory is None:
             output_directory = f"{OUTPUT_DIR}/qr_codes"
-        
-        # Ensure output directory exists
         os.makedirs(output_directory, exist_ok=True)
-        
-        # Generate batch ID for tracking
+
         batch_id = str(uuid.uuid4())[:8]
-        
-        # Validate all components first
-        valid_components, invalid_components = self.validator.validate_batch_data(components_list)
-        
-        # Check for duplicate serial numbers
-        duplicates = self.validator.check_duplicate_serial_numbers(valid_components)
-        
-        if duplicates:
-            print(f"Warning: Found {len(duplicates)} duplicate serial numbers")
-            for dup in duplicates:
-                print(f"  - {dup['message']}")
-        
-        # Process valid components
         successful_generations = []
         failed_generations = []
-        
-        for i, component in enumerate(valid_components):
+
+        # --- PRE-PROCESSING VALIDATION ---
+        if not components_list:
+            # Handle empty CSV case
+            report_file = self._generate_batch_report(batch_id, [], [])
+            return {
+                'batch_id': batch_id, 'success_count': 0, 'failed_count': 0,
+                'report_file': report_file, 'successful_generations': [], 'failed_generations': []
+            }
+
+        required_columns = ['region', 'division', 'track_id', 'km_marker', 'component_type', 'installation_date']
+        first_item_keys = components_list[0].keys()
+        missing_cols = [col for col in required_columns if col not in first_item_keys]
+        if missing_cols:
+            error_message = f"CSV file is missing required columns: {', '.join(missing_cols)}"
+            for component in components_list:
+                failed_generations.append({'component': component, 'error': error_message})
+            report_file = self._generate_batch_report(batch_id, [], failed_generations)
+            return {
+                'batch_id': batch_id, 'success_count': 0, 'failed_count': len(components_list),
+                'report_file': report_file, 'successful_generations': [], 'failed_generations': failed_generations
+            }
+
+        # --- ROW-BY-ROW PROCESSING ---
+        for i, component in enumerate(components_list):
             try:
-                # Generate QR code
+                # --- DATA VALIDATION AND TYPE CONVERSION ---
+                track_id = int(component['track_id'])
+                km_marker = int(component['km_marker'])
+                serial_number = int(component['serial_number'])
+                
+                installation_date_str = str(component['installation_date'])
+                try:
+                    installation_date_obj = datetime.strptime(installation_date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    raise ValueError(f"Invalid date format for '{installation_date_str}'. Expected YYYY-MM-DD.")
+
+                # --- QR GENERATION ---
                 qr_image, qr_data, filename = self.qr_generator.generate_railway_qr(
-                    component['region'],
-                    component['division'],
-                    component['track_id'],
-                    component['km_marker'],
-                    component['component_type'],
-                    component['year'],
-                    component['serial_number']
+                    component['region'], component['division'], track_id, km_marker,
+                    component['component_type'], installation_date_obj, serial_number
                 )
-                
-                # Save QR code
                 filepath = self.qr_generator.save_qr_code(qr_image, filename, output_directory)
-                
-                # Save to database
+
+                # --- DATABASE INTERACTION ---
                 component_specs = {
-                    'material': component.get('material'),
-                    'size': component.get('size'),
-                    'manufacturer': component.get('manufacturer'),
-                    'status': component.get('status', 'ACTIVE')
+                    'material': component.get('material'), 'size': component.get('size'),
+                    'manufacturer': component.get('manufacturer'), 'status': 'ACTIVE'
                 }
-                
-                db_success = self.db_manager.save_component_data(qr_data, component_specs)
-                
-                # Log generation
-                self.db_manager.log_generation(
-                    qr_data, 'batch', batch_id, filepath
-                )
-                
+                db_success = self.db_manager.save_component_data(qr_data, component_specs, installation_date_str)
+                self.db_manager.log_generation(qr_data, 'batch', batch_id, filepath)
+
                 successful_generations.append({
-                    'index': i,
-                    'component': component,
-                    'qr_data': qr_data,
-                    'filepath': filepath,
-                    'db_saved': db_success
+                    'component': component, 'qr_data': qr_data,
+                    'filepath': filepath, 'db_saved': db_success
                 })
-                
+            except KeyError as e:
+                failed_generations.append({'component': component, 'error': f"Missing column in CSV: {e}"})
+            except ValueError as e:
+                failed_generations.append({'component': component, 'error': f"Invalid data type or format: {e}"})
             except Exception as e:
-                failed_generations.append({
-                    'index': i,
-                    'component': component,
-                    'error': str(e)
-                })
+                failed_generations.append({'component': component, 'error': f"An unexpected error occurred: {e}"})
         
-        # Generate report
-        report_file = self._generate_batch_report(
-            batch_id, successful_generations, failed_generations, 
-            invalid_components, duplicates, output_directory
-        )
+        report_file = self._generate_batch_report(batch_id, successful_generations, failed_generations)
         
         return {
-            'batch_id': batch_id,
-            'success_count': len(successful_generations),
-            'failed_count': len(failed_generations) + len(invalid_components),
-            'successful_generations': successful_generations,
-            'failed_generations': failed_generations,
-            'invalid_components': invalid_components,
-            'duplicates': duplicates,
-            'report_file': report_file
+            'batch_id': batch_id, 'success_count': len(successful_generations),
+            'failed_count': len(failed_generations), 'successful_generations': successful_generations,
+            'failed_generations': failed_generations, 'report_file': report_file
         }
-    
-    def _generate_batch_report(self, batch_id: str, successful_generations: List[Dict],
-                              failed_generations: List[Dict], invalid_components: List[Dict],
-                              duplicates: List[Dict], output_directory: str) -> str:
-        """Generate detailed batch report"""
-        
+
+    def _generate_batch_report(self, batch_id: str, successful: List[Dict], failed: List[Dict]) -> str:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_filename = f"batch_report_{batch_id}_{timestamp}.csv"
         report_path = os.path.join(f"{OUTPUT_DIR}/reports", report_filename)
-        
-        # Ensure reports directory exists
-        os.makedirs(f"{OUTPUT_DIR}/reports", exist_ok=True)
-        
-        # Prepare report data
+        os.makedirs(os.path.dirname(report_path), exist_ok=True)
         report_data = []
-        
-        # Add successful generations
-        for item in successful_generations:
-            report_data.append({
-                'Status': 'SUCCESS',
-                'QR_Data': item['qr_data'],
-                'File_Path': item['filepath'],
-                'Region': item['component']['region'],
-                'Division': item['component']['division'],
-                'Track_ID': item['component']['track_id'],
-                'KM_Marker': item['component']['km_marker'],
-                'Component_Type': item['component']['component_type'],
-                'Year': item['component']['year'],
-                'Serial_Number': item['component']['serial_number'],
-                'Material': item['component'].get('material', ''),
-                'Size': item['component'].get('size', ''),
-                'Manufacturer': item['component'].get('manufacturer', ''),
-                'DB_Saved': item['db_saved'],
-                'Error': ''
-            })
-        
-        # Add failed generations
-        for item in failed_generations:
-            report_data.append({
-                'Status': 'FAILED',
-                'QR_Data': '',
-                'File_Path': '',
-                'Region': item['component'].get('region', ''),
-                'Division': item['component'].get('division', ''),
-                'Track_ID': item['component'].get('track_id', ''),
-                'KM_Marker': item['component'].get('km_marker', ''),
-                'Component_Type': item['component'].get('component_type', ''),
-                'Year': item['component'].get('year', ''),
-                'Serial_Number': item['component'].get('serial_number', ''),
-                'Material': item['component'].get('material', ''),
-                'Size': item['component'].get('size', ''),
-                'Manufacturer': item['component'].get('manufacturer', ''),
-                'DB_Saved': False,
-                'Error': item['error']
-            })
-        
-        # Add invalid components
-        for item in invalid_components:
-            report_data.append({
-                'Status': 'INVALID',
-                'QR_Data': '',
-                'File_Path': '',
-                'Region': item['component'].get('region', ''),
-                'Division': item['component'].get('division', ''),
-                'Track_ID': item['component'].get('track_id', ''),
-                'KM_Marker': item['component'].get('km_marker', ''),
-                'Component_Type': item['component'].get('component_type', ''),
-                'Year': item['component'].get('year', ''),
-                'Serial_Number': item['component'].get('serial_number', ''),
-                'Material': item['component'].get('material', ''),
-                'Size': item['component'].get('size', ''),
-                'Manufacturer': item['component'].get('manufacturer', ''),
-                'DB_Saved': False,
-                'Error': item['error']
-            })
-        
-        # Write CSV report
-        df = pd.DataFrame(report_data)
-        df.to_csv(report_path, index=False)
-        
+        for item in successful:
+            row = {'Status': 'SUCCESS', 'QR_Data': item['qr_data'], 'File_Path': item['filepath'], 'Error': ''}
+            row.update(item['component'])
+            report_data.append(row)
+        for item in failed:
+            row = {'Status': 'FAILED', 'QR_Data': '', 'File_Path': '', 'Error': item['error']}
+            row.update(item['component'])
+            report_data.append(row)
+        if report_data:
+            df = pd.DataFrame(report_data)
+            df.to_csv(report_path, index=False)
         return report_path
-    
-    def create_zip_archive(self, qr_files: List[str], output_path: str) -> bool:
-        """
-        Create ZIP archive of QR code files
-        
-        Parameters:
-        - qr_files: list of QR code file paths
-        - output_path: str (output ZIP file path)
-        
-        Returns:
-        - success: bool
-        """
-        
-        try:
-            with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for file_path in qr_files:
-                    if os.path.exists(file_path):
-                        # Add file to zip with just the filename
-                        zipf.write(file_path, os.path.basename(file_path))
-            
-            return True
-            
-        except Exception as e:
-            print(f"Error creating ZIP archive: {e}")
-            return False
-    
+
     def load_components_from_csv(self, csv_file: str) -> List[Dict]:
-        """
-        Load component data from CSV file
-        
-        Parameters:
-        - csv_file: str (path to CSV file)
-        
-        Returns:
-        - components: list of component dicts
-        """
-        
         try:
-            df = pd.read_csv(csv_file)
-            components = df.to_dict('records')
-            
-            # Convert numeric columns
-            for component in components:
-                if 'track_id' in component:
-                    component['track_id'] = int(component['track_id'])
-                if 'km_marker' in component:
-                    component['km_marker'] = int(component['km_marker'])
-                if 'year' in component:
-                    component['year'] = int(component['year'])
-                if 'serial_number' in component:
-                    component['serial_number'] = int(component['serial_number'])
-            
-            return components
-            
+            df = pd.read_csv(csv_file, dtype=str).fillna('')
+            df.columns = df.columns.str.strip()
+            return df.to_dict('records')
         except Exception as e:
             print(f"Error loading CSV file: {e}")
             return []
-    
+
     def generate_auto_serial_batch(self, base_components: List[Dict]) -> List[Dict]:
-        """
-        Generate batch with automatic serial numbers
-        
-        Parameters:
-        - base_components: list of component dicts (without serial numbers)
-        
-        Returns:
-        - components: list with auto-assigned serial numbers
-        """
-        
-        components = []
-        
-        for base_component in base_components:
-            # Get next serial number
+        components_with_serials = []
+        for component in base_components:
+            new_component = component.copy()
+            if 'installation_date' not in new_component:
+                 # If date is missing, we can't generate a serial, so we'll let it fail later with a clear message
+                new_component['serial_number'] = 'ERROR_DATE_MISSING'
+                components_with_serials.append(new_component)
+                continue
+
+            tracking_date = str(new_component['installation_date'])
             next_serial = self.db_manager.get_next_serial_number(
-                base_component['region'],
-                base_component['division'],
-                base_component['component_type'],
-                base_component['year']
+                new_component['region'], new_component['division'],
+                new_component['component_type'], tracking_date
             )
-            
-            # Create component with serial number
-            component = base_component.copy()
-            component['serial_number'] = next_serial
-            components.append(component)
-        
-        return components
+            new_component['serial_number'] = next_serial
+            components_with_serials.append(new_component)
+        return components_with_serials
     
     def create_printable_sheet(self, qr_files: List[str], output_path: str, 
                               rows: int = 5, cols: int = 4) -> bool:

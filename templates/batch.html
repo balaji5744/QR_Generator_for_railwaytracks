@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Batch Processing{% endblock %}
+{% block content %}
+<h2>Batch Generate QR Codes from CSV</h2>
+<p>Upload a CSV file with component data to generate multiple QR codes. You can also choose to auto-assign serial numbers and perform a quality check on the output.</p>
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="file" class="form-label">Upload CSV File</label>
+                <input class="form-control" type="file" id="file" name="file" required accept=".csv">
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="auto_serial" id="auto_serial">
+                <label class="form-check-label" for="auto_serial">
+                    Auto-generate serial numbers (ignores 'serial_number' column in CSV)
+                </label>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="quality_check" id="quality_check">
+                <label class="form-check-label" for="quality_check">
+                    Perform AI quality check on generated QR codes
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload and Process</button>
+        </form>
+    </div>
+</div>
+
+{% if report_file %}
+<div class="mt-4">
+    <h3>Batch Process Complete</h3>
+    <p>Your batch has been processed. Download the reports below.</p>
+    <a href="{{ url_for('serve_report', filename=report_file) }}" class="btn btn-info">Download Generation Report</a>
+    {% if quality_report_file %}
+        <a href="{{ url_for('serve_report', filename=quality_report_file) }}" class="btn btn-secondary">Download Quality Report</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

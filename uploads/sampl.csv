@@ -1,0 +1,4 @@
+region,division,track_id,km_marker,component_type,installation_date,serial_number,material,size,manufacturer
+WR,BCT,21,114320,BOLT,2025-10-05,1001,Steel,M20,Railway Component Co.
+CR,CSMT,105,89450,CLIP,2025-10-12,2001,Steel,Standard,Track Solutions Ltd.
+NR,DLI,67,234100,PLATE,2025-10-21,3001,Steel,Heavy Duty,Northern Rails Inc.

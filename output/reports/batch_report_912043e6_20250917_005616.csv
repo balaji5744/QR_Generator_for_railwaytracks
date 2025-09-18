@@ -1,0 +1,11 @@
+Status,QR_Data,File_Path,Error,region,division,track_id,km_marker,component_type,installation_date,serial_number,material,size,manufacturer
+FAILED,,,time data '23-04-2025' does not match format '%Y-%m-%d',WR,BCT,21,114320,BOLT,23-04-2025,1,Steel,M20,Railway Component Co.
+FAILED,,,time data '05-10-2025' does not match format '%Y-%m-%d',CR,CSMT,105,89450,CLIP,05-10-2025,1,Steel,Standard,Track Solutions Ltd.
+FAILED,,,time data '12-10-2025' does not match format '%Y-%m-%d',NR,DLI,67,234100,PLATE,12-10-2025,1,Steel,Heavy Duty,Northern Rails Inc.
+FAILED,,,time data '21-10-2025' does not match format '%Y-%m-%d',ER,HWH,45,156780,SLEEPER,21-10-2025,1,Concrete,Standard,Eastern Rail Components
+FAILED,,,time data '03-11-2025' does not match format '%Y-%m-%d',SR,MAS,89,234560,ANCHOR,03-11-2025,1,Steel,Heavy Duty,Southern Track Works
+FAILED,,,time data '15-11-2025' does not match format '%Y-%m-%d',WR,VAPI,12,78920,BOLT,15-11-2025,1,Steel,M22,Western Component Mfg.
+FAILED,,,time data '28-11-2025' does not match format '%Y-%m-%d',CR,NAGPUR,78,345670,CLIP,28-11-2025,1,Steel,Standard,Central Rail Systems
+FAILED,,,time data '07-12-2025' does not match format '%Y-%m-%d',NR,AMB,34,123450,PLATE,07-12-2025,1,Steel,Heavy Duty,Northern Component Co.
+FAILED,,,time data '19-12-2025' does not match format '%Y-%m-%d',ER,ASN,56,234890,SLEEPER,19-12-2025,1,Concrete,Standard,Eastern Track Solutions
+FAILED,,,time data '05-01-2026' does not match format '%Y-%m-%d',SR,TPJ,91,456780,ANCHOR,05-01-2026,1,Steel,Heavy Duty,Southern Rail Works

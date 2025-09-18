@@ -1,0 +1,16 @@
+/* Add a bit of padding to the body to prevent content from touching the edges */
+body {
+    padding-bottom: 60px; /* Height of the footer */
+}
+
+/* Make the footer stick to the bottom */
+footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
+/* Improve card appearance */
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}

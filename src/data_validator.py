@@ -7,50 +7,50 @@ import re
 from datetime import datetime
 import sys
 import os
+
+# Add project root to path to find the config module
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import RAILWAY_REGIONS, RAILWAY_DIVISIONS, COMPONENT_TYPES
 
 
 class RailwayDataValidator:
     """Validates railway component data and QR code formats"""
-    
+
     def __init__(self):
+        # CORRECTED: The regex now looks for an 8-digit date (\d{8}) instead of a 4-digit year.
         self.qr_pattern = re.compile(
-            r'^IR-([A-Z]{2})-([A-Z0-9]{2,5})-(\d{3})-(\d{6})-([A-Z]+)-(\d{4})-(\d{6})$'
+            r'^IR-([A-Z]{2,4})-([A-Z0-9]{2,6})-(\d{3})-(\d{6})-([A-Z]+)-(\d{8})-(\d{6})$'
         )
-    
+
     def validate_qr_format(self, qr_data):
         """
-        Validate QR code data format
-        
-        Parameters:
-        - qr_data: str (QR code data string)
-        
-        Returns:
-        - is_valid: bool
-        - parsed_data: dict (parsed components if valid)
-        - error_message: str (error description if invalid)
+        Validate QR code data format.
         """
-        
         if not isinstance(qr_data, str):
             return False, None, "QR data must be a string"
-        
+
         match = self.qr_pattern.match(qr_data)
         if not match:
             return False, None, "QR data format is invalid"
+
+        # Extract components from the matched QR data string
+        region, division, track_id, km_marker, component_type, date_str, serial_number = match.groups()
         
-        # Extract components
-        region, division, track_id, km_marker, component_type, year, serial_number = match.groups()
-        
-        # Validate individual components
+        # CORRECTED: Convert and validate the date string
+        try:
+            installation_date = datetime.strptime(date_str, '%Y%m%d').date()
+        except ValueError:
+            return False, None, f"Invalid date format in QR data: {date_str}"
+
+        # Validate the other individual components
         validation_result = self.validate_components(
-            region, division, int(track_id), int(km_marker), 
-            component_type, int(year), int(serial_number)
+            region, division, int(track_id), int(km_marker),
+            component_type, installation_date, int(serial_number)
         )
-        
+
         if not validation_result['is_valid']:
             return False, None, validation_result['error_message']
-        
+
         # Return parsed data
         parsed_data = {
             'region': region,
@@ -58,73 +58,43 @@ class RailwayDataValidator:
             'track_id': int(track_id),
             'km_marker': int(km_marker),
             'component_type': component_type,
-            'year': int(year),
+            'installation_date': installation_date, # Now a date object
             'serial_number': int(serial_number),
             'full_data': qr_data
         }
-        
+
         return True, parsed_data, None
-    
-    def validate_components(self, region, division, track_id, km_marker, 
-                           component_type, year, serial_number):
+
+    def validate_components(self, region, division, track_id, km_marker,
+                           component_type, installation_date, serial_number):
         """
-        Validate individual component parameters
-        
-        Returns:
-        - dict with 'is_valid', 'error_message' keys
+        Validate individual component parameters.
+        NOW ACCEPTS 'installation_date' object INSTEAD OF 'year'.
         """
-        
         # Validate region
         if region not in RAILWAY_REGIONS:
-            return {
-                'is_valid': False,
-                'error_message': f"Invalid region: {region}. Must be one of {list(RAILWAY_REGIONS.keys())}"
-            }
-        
-        # Validate division
-        if region in RAILWAY_DIVISIONS:
-            if division not in RAILWAY_DIVISIONS[region]:
-                return {
-                    'is_valid': False,
-                    'error_message': f"Invalid division: {division} for region {region}"
-                }
-        
+            return {'is_valid': False, 'error_message': f"Invalid region: {region}"}
+
+        # Validate division (optional check if you have a full list)
+        if region in RAILWAY_DIVISIONS and division not in RAILWAY_DIVISIONS[region]:
+            return {'is_valid': False, 'error_message': f"Invalid division: {division} for region {region}"}
+
         # Validate track_id
         if not (1 <= track_id <= 999):
-            return {
-                'is_valid': False,
-                'error_message': f"Track ID must be between 1 and 999, got {track_id}"
-            }
-        
-        # Validate km_marker
-        if not (0 <= km_marker <= 999999):
-            return {
-                'is_valid': False,
-                'error_message': f"KM marker must be between 0 and 999999, got {km_marker}"
-            }
-        
+            return {'is_valid': False, 'error_message': f"Track ID must be 1-999, got {track_id}"}
+
         # Validate component_type
         if component_type not in COMPONENT_TYPES:
-            return {
-                'is_valid': False,
-                'error_message': f"Invalid component type: {component_type}. Must be one of {list(COMPONENT_TYPES.keys())}"
-            }
-        
-        # Validate year
-        current_year = datetime.now().year
-        if not (2020 <= year <= current_year + 5):
-            return {
-                'is_valid': False,
-                'error_message': f"Year must be between 2020 and {current_year + 5}, got {year}"
-            }
-        
+            return {'is_valid': False, 'error_message': f"Invalid component type: {component_type}"}
+
+        # CORRECTED: Validate the installation_date object
+        if not (datetime(2020, 1, 1).date() <= installation_date <= datetime.now().date().replace(year=datetime.now().year + 5)):
+             return {'is_valid': False, 'error_message': f"Installation date is out of a reasonable range: {installation_date}"}
+
         # Validate serial_number
         if not (1 <= serial_number <= 999999):
-            return {
-                'is_valid': False,
-                'error_message': f"Serial number must be between 1 and 999999, got {serial_number}"
-            }
-        
+            return {'is_valid': False, 'error_message': f"Serial number must be 1-999999, got {serial_number}"}
+
         return {'is_valid': True, 'error_message': None}
     
     def validate_batch_data(self, components_list):

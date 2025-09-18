@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Scan QR Code{% endblock %}
+{% block content %}
+<h2>Scan & Decode Railway QR Code</h2>
+<p>Upload an image of a railway QR code to decode its data and view the component details.</p>
+<div class="row">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Upload QR Code Image</label>
+                        <input class="form-control" type="file" id="file" name="file" required accept="image/png, image/jpeg">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Scan & Decode</button>
+                </form>
+            </div>
+        </div>
+        {% if uploaded_image %}
+            <div class="mt-4 text-center">
+                <h5>Scanned Image:</h5>
+                <img src="{{ url_for('serve_upload', filename=uploaded_image) }}" class="img-fluid" style="max-height: 200px;">
+            </div>
+        {% endif %}
+    </div>
+    <div class="col-md-7">
+        {% if decoded_data %}
+            <h3>Decoded Component Details</h3>
+            <div class="card">
+                <div class="card-header">
+                    <strong>Full QR Data:</strong> <code>{{ decoded_data.full_data }}</code>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Region:</strong> {{ decoded_data.region }}</li>
+                    <li class="list-group-item"><strong>Division:</strong> {{ decoded_data.division }}</li>
+                    <li class="list-group-item"><strong>Track ID:</strong> {{ decoded_data.track_id }}</li>
+                    <li class="list-group-item"><strong>KM Marker:</strong> {{ decoded_data.km_marker }}</li>
+                    <li class="list-group-item"><strong>Component Type:</strong> {{ decoded_data.component_type }}</li>
+                    {# THIS IS THE CORRECTED LINE #}
+                    <li class="list-group-item"><strong>Installation Date:</strong> {{ decoded_data.installation_date }}</li>
+                    <li class="list-group-item"><strong>Serial Number:</strong> {{ decoded_data.serial_number }}</li>
+                </ul>
+            </div>
+        {% else %}
+            <div class="card bg-light">
+                <div class="card-body text-center" style="padding: 10rem 2rem;">
+                    <p class="text-muted">Your decoded QR code details will appear here.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

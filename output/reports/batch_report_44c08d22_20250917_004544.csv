@@ -1,0 +1,11 @@
+Status,QR_Data,File_Path,Region,Division,Track_ID,KM_Marker,Component_Type,Year,Serial_Number,Material,Size,Manufacturer,DB_Saved,Error
+INVALID,,,WR,BCT,21,114320,BOLT,2024,1,Steel,M20,Railway Component Co.,False,Validation error: '<=' not supported between instances of 'datetime.date' and 'int'
+INVALID,,,CR,CSMT,105,89450,CLIP,2024,1,Steel,Standard,Track Solutions Ltd.,False,Validation error: '<=' not supported between instances of 'datetime.date' and 'int'
+INVALID,,,NR,DLI,67,234100,PLATE,2024,1,Steel,Heavy Duty,Northern Rails Inc.,False,Validation error: '<=' not supported between instances of 'datetime.date' and 'int'
+INVALID,,,ER,HWH,45,156780,SLEEPER,2024,1,Concrete,Standard,Eastern Rail Components,False,Validation error: '<=' not supported between instances of 'datetime.date' and 'int'
+INVALID,,,SR,MAS,89,234560,ANCHOR,2024,1,Steel,Heavy Duty,Southern Track Works,False,Validation error: '<=' not supported between instances of 'datetime.date' and 'int'
+INVALID,,,WR,VAPI,12,78920,BOLT,2024,1,Steel,M22,Western Component Mfg.,False,Validation error: '<=' not supported between instances of 'datetime.date' and 'int'
+INVALID,,,CR,NAGPUR,78,345670,CLIP,2024,1,Steel,Standard,Central Rail Systems,False,Validation error: '<=' not supported between instances of 'datetime.date' and 'int'
+INVALID,,,NR,AMB,34,123450,PLATE,2024,1,Steel,Heavy Duty,Northern Component Co.,False,Validation error: '<=' not supported between instances of 'datetime.date' and 'int'
+INVALID,,,ER,ASN,56,234890,SLEEPER,2024,1,Concrete,Standard,Eastern Track Solutions,False,Validation error: '<=' not supported between instances of 'datetime.date' and 'int'
+INVALID,,,SR,TPJ,91,456780,ANCHOR,2024,1,Steel,Heavy Duty,Southern Rail Works,False,Validation error: '<=' not supported between instances of 'datetime.date' and 'int'

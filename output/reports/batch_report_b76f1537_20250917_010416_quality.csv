@@ -1,0 +1,4 @@
+Filename,Quality_Score,Is_Readable,Issues,Size_Score,Contrast_Score,Sharpness_Score,Alignment_Score,Readability_Score,Image_Width,Image_Height,File_Size_Bytes
+IR-WR-BCT-021-114320-BOLT-20251005-000001.png,90.0,True,QR code alignment markers are distorted,100,100,100,33.33333333333333,100,615,615,1440
+IR-CR-CSMT-105-089450-CLIP-20251012-000001.png,90.0,True,QR code alignment markers are distorted,100,100,100,33.33333333333333,100,615,615,1492
+IR-NR-DLI-067-234100-PLATE-20251021-000001.png,90.0,True,QR code alignment markers are distorted,100,100,100,33.33333333333333,100,615,615,1454

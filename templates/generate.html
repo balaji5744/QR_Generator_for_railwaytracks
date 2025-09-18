@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Generate QR Code{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <h2>Generate a Single QR Code</h2>
+        <p>Fill in the component details. The system will auto-generate the next available serial number and save the component to the database.</p>
+        <form method="post" class="mt-4">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="region" class="form-label">Region</label>
+                    <select class="form-select" id="region" name="region" required>
+                        {% for r in regions %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="division" class="form-label">Division</label>
+                    <input type="text" class="form-control" id="division" name="division" required placeholder="e.g., BCT">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="track_id" class="form-label">Track ID (1-999)</label>
+                    <input type="number" class="form-control" id="track_id" name="track_id" required min="1" max="999">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="km_marker" class="form-label">KM Marker (0-999999)</label>
+                    <input type="number" class="form-control" id="km_marker" name="km_marker" required min="0" max="999999">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="component_type" class="form-label">Component Type</label>
+                    <select class="form-select" id="component_type" name="component_type" required>
+                        {% for ct in component_types %}<option value="{{ ct }}">{{ ct }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="installation_date" class="form-label">Installation Date</label>
+                    <input type="date" class="form-control" id="installation_date" name="installation_date" required>
+                </div>
+            </div>
+            <hr>
+            <h5>Component Specifications (Optional)</h5>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="material" class="form-label">Material</label>
+                    <input type="text" class="form-control" id="material" name="material" placeholder="e.g., Steel">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="size" class="form-label">Size</label>
+                    <input type="text" class="form-control" id="size" name="size" placeholder="e.g., M20">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="manufacturer" class="form-label">Manufacturer</label>
+                    <input type="text" class="form-control" id="manufacturer" name="manufacturer" placeholder="e.g., Rail Co.">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Generate & Save</button>
+        </form>
+    </div>
+    <div class="col-md-6 text-center">
+        {% if qr_image %}
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Generated QR Code</h5>
+                    <img src="{{ url_for('serve_qr_code', filename=qr_image) }}" class="img-fluid" alt="Generated QR Code">
+                    <p class="card-text mt-3"><strong>Data:</strong> <code>{{ qr_data }}</code></p>
+                    <a href="{{ url_for('serve_qr_code', filename=qr_image) }}" class="btn btn-success" download>Download QR Code</a>
+                </div>
+            </div>
+        {% else %}
+            <div class="card bg-light">
+                <div class="card-body" style="padding: 8rem 2rem;">
+                    <p class="text-muted">Your generated QR code will appear here.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
