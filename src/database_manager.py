@@ -30,6 +30,7 @@ class RailwayDatabaseManager:
     def init_database(self):
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
+            # (Your existing tables for components, serial_tracking, etc. remain here)
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS components (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, qr_data TEXT UNIQUE NOT NULL,
@@ -58,8 +59,36 @@ class RailwayDatabaseManager:
                     quality_score REAL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
+
+            # --- ADD THIS NEW TABLE ---
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS anomaly_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    confidence REAL NOT NULL,
+                    video_source TEXT
+                )
+            ''')
             conn.commit()
 
+    # --- ADD THIS NEW FUNCTION ---
+    def log_anomaly(self, confidence, video_source="Live Webcam"):
+        """Logs a detected anomaly to the database."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO anomaly_logs (confidence, video_source) VALUES (?, ?)",
+                    (confidence, video_source)
+                )
+                conn.commit()
+                print(f"Logged anomaly with {confidence:.2f}% confidence.")
+                return True
+        except Exception as e:
+            print(f"Error logging anomaly: {e}")
+            return False
+
+    # (The rest of your functions like save_component_data, get_next_serial_number, etc., remain unchanged)
     def save_component_data(self, qr_data: str, component_specs: Dict, installation_date: str):
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -289,28 +318,3 @@ class RailwayDatabaseManager:
         except Exception as e:
             print(f"Error exporting to CSV: {e}")
             return False
-
-
-if __name__ == "__main__":
-    # Test the database manager
-    db = RailwayDatabaseManager()
-    
-    # Test saving component data
-    test_qr = "IR-WR-BCT-021-114320-BOLT-2024-001234"
-    test_specs = {
-        'material': 'Steel',
-        'size': 'M20',
-        'manufacturer': 'Railway Component Co.',
-        'status': 'ACTIVE'
-    }
-    
-    success = db.save_component_data(test_qr, test_specs)
-    print(f"Saved component: {success}")
-    
-    # Test getting next serial number
-    next_serial = db.get_next_serial_number('WR', 'BCT', 'BOLT', 2024)
-    print(f"Next serial number: {next_serial}")
-    
-    # Test statistics
-    stats = db.get_statistics()
-    print(f"Database statistics: {stats}")

@@ -3,7 +3,40 @@
 {% block content %}
 <div class="container">
     <h2 class="mt-4">Live Railway Track Analysis</h2>
-    <p>This is a real-time feed analyzing the track for damaged components. The AI model will highlight any detected issues with a red box.</p>
+    <p>Use your webcam for live analysis or upload a single image to get an instant result from the AI model.</p>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Upload an Image for Analysis</div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="file" class="form-label">Select an image of a railway track:</label>
+                            <input class="form-control" type="file" id="file" name="file" required accept="image/png, image/jpeg, image/jpg">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Analyze Image</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Analysis Result</div>
+                <div class="card-body text-center">
+                    {% if result_image %}
+                        <img src="{{ url_for('serve_detection', filename=result_image) }}" class="img-fluid" alt="Analysis Result">
+                    {% else %}
+                        <p class="text-muted" style="padding: 4rem 0;">Your analyzed image will appear here.</p>
+                {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr>
+
+    <h3 class="mt-4">Live Webcam Feed</h3>
     <div class="card mt-4">
         <div class="card-header">
             Live Video Feed

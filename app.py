@@ -1,13 +1,19 @@
 # ==============================================================================
 # A CLEANED AND CORRECTED VERSION OF YOUR APP.PY
 # ==============================================================================
-
 import os
 import sys
 import shutil
 from datetime import datetime
 import numpy as np
 import cv2
+import sqlite3 # <-- ADD THIS LINE
+
+from flask import (Flask, render_template, request, redirect, url_for,
+                   flash, send_from_directory, abort, Response)
+from werkzeug.utils import secure_filename
+
+
 
 from flask import (Flask, render_template, request, redirect, url_for,
                    flash, send_from_directory, abort, Response)
@@ -47,6 +53,19 @@ def get_db_manager():
     return RailwayDatabaseManager()
 
 # --- Routes ---
+
+# ... (near the top with other configs)
+app.config['DETECTIONS_FOLDER'] = os.path.join(app.config['OUTPUT_FOLDER'], 'detections')
+
+# ... (near the top with other directory creations)
+os.makedirs(app.config['DETECTIONS_FOLDER'], exist_ok=True)
+
+
+# ... (near the bottom with other file-serving routes)
+@app.route('/output/detections/<path:filename>')
+def serve_detection(filename):
+    """Serves processed detection images."""
+    return send_from_directory(app.config['DETECTIONS_FOLDER'], filename)
 
 @app.route('/')
 def index():
@@ -145,6 +164,32 @@ def batch():
             flash(f'An error occurred during batch processing: {e}', 'danger')
 
     return render_template('batch.html')
+
+
+
+@app.route('/anomaly_log')
+def anomaly_log():
+    """Displays the log of detected anomalies."""
+    db_manager = get_db_manager()
+    logs_data = [] # Create an empty list to hold our cleaned data
+    try:
+        with sqlite3.connect(db_manager.db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM anomaly_logs ORDER BY timestamp DESC")
+            # Loop through the raw database rows
+            for row in cursor.fetchall():
+                # Convert each row to a dictionary with the correct data types
+                logs_data.append({
+                    'id': row['id'],
+                    'timestamp': row['timestamp'],
+                    'confidence': float(row['confidence']), # Explicitly convert confidence to a float
+                    'video_source': row['video_source']
+                })
+    except Exception as e:
+        flash(f"Error fetching anomaly logs: {e}", "danger")
+        
+    return render_template('anomaly_log.html', logs=logs_data)
 
 
 @app.route('/verify', methods=['GET', 'POST'])
@@ -272,11 +317,55 @@ def generate_frames():
 
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-
-@app.route('/live_feed')
+@app.route('/live_feed', methods=['GET', 'POST'])
 def live_feed():
-    return render_template('live_feed.html')
+    """
+    Handles both displaying the live feed page (GET) and processing
+    a single uploaded image for anomaly detection (POST).
+    """
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part', 'danger')
+            return redirect(request.url)
+        
+        file = request.files['file']
+        
+        if file.filename == '':
+            flash('No selected file', 'danger')
+            return redirect(request.url)
 
+        if file:
+            try:
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+
+                image = cv2.imread(filepath)
+                if image is None:
+                    flash('Could not read the uploaded image.', 'danger')
+                    return redirect(request.url)
+                
+                # Use our existing detector to process the image
+                processed_image = detector.process_frame(image)
+                flash('✅ Image successfully analyzed!', 'success') # Success message
+                
+                # Create a new filename for the result
+                result_filename = f"result_{filename}"
+                # --- CHANGE: Save to the new detections folder ---
+                result_filepath = os.path.join(app.config['DETECTIONS_FOLDER'], result_filename)
+                
+                # Save the processed image
+                cv2.imwrite(result_filepath, processed_image)
+
+                # Render the page again, now with the result image
+                return render_template('live_feed.html', result_image=result_filename)
+
+            except Exception as e:
+                flash(f"An error occurred: {e}", "danger")
+                return redirect(request.url)
+
+    # This is the original GET request logic
+    return render_template('live_feed.html', result_image=None)
 
 @app.route('/video_feed')
 def video_feed():

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Anomaly Log{% endblock %}
+{% block content %}
+<div class="container">
+    <h2 class="mt-4">Anomaly Detection Log</h2>
+    <p>This page shows a history of all high-confidence anomalies detected by the AI model.</p>
+    <div class="card mt-4">
+        <div class="card-header">
+            Detection History
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col">Log ID</th>
+                        <th scope="col">Timestamp</th>
+                        <th scope="col">Confidence</th>
+                        <th scope="col">Source</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <th scope="row">{{ log.id }}</th>
+                        <td>{{ log.timestamp }}</td>
+                        <td>{{ "%.2f"|format(log.confidence) }}%</td>
+                        <td>{{ log.video_source }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center">No anomalies logged yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
