@@ -1,0 +1,24 @@
+# Python virtual environment
+myenv/
+venv/
+*.env
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Database file
+# You generally don't commit the database itself
+models/database.db
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# User-uploaded files and generated reports
+uploads/
+output/reports/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store

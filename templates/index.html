@@ -1,30 +1,66 @@
 {% extends 'base.html' %}
-{% block title %}Home{% endblock %}
+{% block title %}Dashboard{% endblock %}
 {% block content %}
 <div class="p-5 mb-4 bg-light rounded-3">
     <div class="container-fluid py-5">
-        <h1 class="display-5 fw-bold">Railway QR Code Generation System</h1>
-        <p class="col-md-8 fs-4">An AI-based solution for generating and verifying laser-markable QR codes for Indian Railways track fittings. Built for the Smart India Hackathon.</p>
-        <a href="{{ url_for('generate') }}" class="btn btn-primary btn-lg" type="button">Get Started</a>
+        <h1 class="display-5 fw-bold">Railway QR System Dashboard</h1>
+        <p class="col-md-8 fs-4">A real-time overview of all track components managed by the system. Built for the Smart India Hackathon.</p>
     </div>
 </div>
 
-<div class="row text-center">
-    <div class="col-lg-3">
-        <h4>Generate Single QR</h4>
-        <p>Create and save a unique QR code for a single railway component.</p>
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center text-bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Components Tracked</h5>
+                <p class="display-4">{{ stats.total_components }}</p>
+            </div>
+        </div>
     </div>
-    <div class="col-lg-3">
-        <h4>Batch Processing</h4>
-        <p>Upload a CSV file to generate thousands of QR codes at once.</p>
+    <div class="col-md-4">
+        <div class="card text-center text-bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Generations (Last 7 Days)</h5>
+                <p class="display-4">{{ stats.recent_generations }}</p>
+            </div>
+        </div>
     </div>
-    <div class="col-lg-3">
-        <h4>AI Quality Check</h4>
-        <p>Verify the readability and quality of any QR code image before marking.</p>
+    <div class="col-md-4">
+        <div class="card text-center text-bg-secondary">
+            <div class="card-body">
+                <h5 class="card-title">Component Types</h5>
+                <p class="display-4">{{ stats.by_type.keys()|length }}</p>
+            </div>
+        </div>
     </div>
-    <div class="col-lg-3">
-        <h4>Database & Reports</h4>
-        <p>View system statistics and generate filtered reports of all components.</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <h3>Components by Type</h3>
+        <div class="card">
+            <ul class="list-group list-group-flush">
+                {% for type, count in stats.by_type.items() %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ type }}
+                    <span class="badge bg-primary rounded-pill">{{ count }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <h3>Components by Region</h3>
+        <div class="card">
+            <ul class="list-group list-group-flush">
+                {% for region, count in stats.by_region.items() %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ region }}
+                    <span class="badge bg-primary rounded-pill">{{ count }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 </div>
 {% endblock %}
